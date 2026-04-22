@@ -60,11 +60,26 @@ Detailed rules for recommendation, wardrobe mutation, notes, persistent preferen
 |---|---|
 | `user/wardrobe.json` | Authoritative wardrobe data and item-level facts |
 | `user/preference.json` | Durable user preferences used for recommendation weighting |
-| `user/config.json` | User configuration, including weather-related configuration |
+| `<workspace>/.claude/awesome-closet-stylist/config.json` | User configuration, including weather-related configuration |
+| `user/config.json` | Legacy config path used only for one-time migration detection |
 
 Read the relevant local data before acting on a request that depends on it.
 
 `user/wardrobe.json` is the authoritative source for wardrobe existence and recorded item attributes.
+
+For user configuration, resolve path in this order:
+1. user-explicit custom path (if provided),
+2. `<workspace>/.claude/awesome-closet-stylist/config.json` (new default),
+3. `user/config.json` only for one-time migration detection.
+
+Migration policy for config initialization:
+- if the new default path exists, read it directly;
+- if the new default path does not exist but legacy `user/config.json` exists, copy legacy config to the new default path and use the new path;
+- if neither exists, initialize default config at the new default path.
+
+Migration must be non-destructive:
+- keep legacy `user/config.json` in place after successful copy,
+- provide a one-time migration notice or log indicating the effective config path.
 
 ---
 
@@ -264,7 +279,7 @@ When `user/wardrobe.json` has no items, treat the wardrobe as uninitialized.
 In that case:
 - explain the skill’s capability range in natural language,
 - invite the user to upload clothing photos or describe a few commonly worn items,
-- mention that weather-aware help can be configured through `user/config.json`,
+- mention that weather-aware help can be configured through `<workspace>/.claude/awesome-closet-stylist/config.json`,
 - avoid turning initialization into a field-collection form,
 - and move into normal interaction as soon as a minimally usable wardrobe exists.
 
